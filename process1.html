@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Envelope Experience</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body, html { height: 100%; width: 100%; font-family: Arial, sans-serif; overflow: hidden; }
+
+  .page { display: none; height: 100%; width: 100%; position: relative; justify-content: center; align-items: center; }
+  .active { display: flex; }
+
+  /* Page 1 - Envelope */
+  #page1 {
+    background: url('background.png') no-repeat center center/cover;
+    cursor: pointer;
+  }
+  #envelope {
+    width: 600px;
+    height: auto;
+    transition: transform 0.5s ease;
+  }
+  #envelope:hover { transform: scale(1.1); }
+
+  /* Page 2 - moved down 50px more */
+  #page2 {
+    background: url('background.png') no-repeat center center/cover;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Envelope back */
+  #envelope-back {
+    width: 1000px;
+    position: absolute;
+    bottom: 50px; /* 50px lower than before */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+
+  /* Bouquet */
+  .bouquet {
+    width: 1000px;
+    position: absolute;
+    bottom: 100px; /* 50px lower */
+    left: 50%;
+    transform: translateX(-50%) scale(0.5) rotate(-15deg);
+    z-index: 2;
+    opacity: 0;
+    transition: transform 1s ease-out, opacity 1s ease-out;
+  }
+  .bouquet.pop-up {
+    transform: translateX(-50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  /* Letter inside bouquet */
+  .letter-inside {
+    width: 150px;
+    position: absolute;
+    bottom: 115px; /* 50px lower */
+    left: 50%;
+    transform: translateX(-50%) scale(1);
+    z-index: 3;
+    cursor: pointer;
+    transition: bottom 1s ease, transform 0.3s ease 0.2s;
+  }
+  .letter-inside:hover {
+    bottom: 400px; /* moves up on hover (adjusted for new lower starting point) */
+    transform: translateX(-50%) scale(2);
+  }
+
+  /* Front overlay */
+  .front-overlay {
+    width: 600px;
+    position: absolute;
+    bottom: 80px; /* 50px lower */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  /* Page 3 - Letter coming out */
+  #page3 {
+    background: url('background.png') no-repeat center center/cover;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: hidden;
+    position: relative;
+  }
+  .letter { width: 500px; height: auto; position: relative; bottom: -200px; transition: bottom 1s ease; }
+  .letter.pop-up { bottom: 50px; }
+
+  /* Page 4 - Mini game */
+  #page4 {
+    background-color: #ffe4e1;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    display: flex;
+  }
+
+  /* Question and boxes */
+  #question-container {
+    display: flex;
+    gap: 40px;
+    margin-top: 50px;
+  }
+  .answer-box {
+    width: 150px;
+    height: 80px;
+    background-color: #ffcccb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    user-select: none;
+  }
+  .answer-box:hover {
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+
+<!-- Page 1 -->
+<div class="page active" id="page1">
+  <img id="envelope" src="envelope.png" alt="Envelope">
+</div>
+
+<!-- Page 2 -->
+<div class="page" id="page2">
+  <img id="envelope-back" src="front.png" alt="Envelope Back">
+  <img class="bouquet" id="bouquet" src="bouquet.png" alt="Bouquet of Flowers">
+  <img class="letter-inside" id="letter1" src="letter1.png" alt="Letter Inside">
+  <img class="front-overlay" src="FRONTER.png" alt="Front Overlay">
+</div>
+
+<!-- Page 3 -->
+<div class="page" id="page3">
+  <img class="letter" id="letter" src="letter.png" alt="Letter">
+</div>
+
+<!-- Page 4 -->
+<div class="page" id="page4">
+  <h1>Do you like this surprise?</h1>
+  <div id="question-container">
+    <div class="answer-box" id="yes-box">Yes</div>
+    <div class="answer-box" id="no-box">No</div>
+  </div>
+</div>
+
+<script>
+  const page1 = document.getElementById('page1');
+  const page2 = document.getElementById('page2');
+  const page3 = document.getElementById('page3');
+  const page4 = document.getElementById('page4');
+  const envelope = document.getElementById('envelope');
+  const bouquet = document.getElementById('bouquet');
+  const letterInside = document.getElementById('letter1');
+  const letter = document.getElementById('letter');
+
+  const yesBox = document.getElementById('yes-box');
+  const noBox = document.getElementById('no-box');
+
+  // Page navigation
+  envelope.addEventListener('click', () => {
+    page1.classList.remove('active');
+    page2.classList.add('active');
+    setTimeout(() => { bouquet.classList.add('pop-up'); }, 100);
+  });
+
+  page2.addEventListener('click', () => {
+    page2.classList.remove('active');
+    page3.classList.add('active');
+    setTimeout(() => { letter.classList.add('pop-up'); }, 100);
+  });
+
+  page3.addEventListener('click', () => {
+    page3.classList.remove('active');
+    page4.classList.add('active');
+  });
+
+  // Page 4 interactions - infinite shrinking
+  noBox.addEventListener('click', () => {
+    // Shrink No box
+    const noStyle = window.getComputedStyle(noBox);
+    const noMatrix = new WebKitCSSMatrix(noStyle.transform);
+    const noScale = noMatrix.a; // scaleX
+    noBox.style.transform = `scale(${noScale * 0.9})`;
+
+    // Grow Yes box
+    const yesStyle = window.getComputedStyle(yesBox);
+    const yesMatrix = new WebKitCSSMatrix(yesStyle.transform);
+    const yesScale = yesMatrix.a; // scaleX
+    yesBox.style.transform = `scale(${yesScale * 1.1})`;
+  });
+
+  yesBox.addEventListener('click', () => {
+    alert("Thank you for waiting me hihihihi :3");
+  });
+</script>
+
+</body>
+</html>
